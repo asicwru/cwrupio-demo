@@ -306,17 +306,5 @@ The instruction engine asserts `fault` for these conditions:
 - `LOOP` when the loop counter is 0.
 - A branch address outside the instruction memory.
 
-Fault behavior: TBD.
-
-## Timing
-
-| Item | Value |
-|---|---|
-| Instruction-memory depth | TBD |
-| Instruction-memory read latency | TBD |
-| Cycles per instruction | TBD |
-| Extra cycles for a taken branch | TBD |
-| `WAIT N` start and completion cycles | TBD |
-| Input synchronizer latency | TBD |
-
+Fault behavior: TBD
 
