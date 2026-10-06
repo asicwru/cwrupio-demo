@@ -4,8 +4,7 @@ This is currently **unfinished**. Currently, we have 11 instructions supported b
 
 ## Instructions
 
-| Instruction | Name |
-Description | Opcode |
+| Instruction | Name | Description | Opcode |
 |---|---|---|---|
 | `HALT` | Halt | Stop execution and assert `done`. Pins keep their values. | `0x0` |
 | `SET pin, value` | Set pin | Write 0 or 1 to the output register of a pin. | `0x1` |
