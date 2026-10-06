@@ -4,7 +4,8 @@ This is currently **unfinished**. Currently, we have 11 instructions supported b
 
 ## Instructions
 
-| Instruction | Name | Description | Opcode |
+| Instruction | Name |
+Description | Opcode |
 |---|---|---|---|
 | `HALT` | Halt | Stop execution and assert `done`. Pins keep their values. | `0x0` |
 | `SET pin, value` | Set pin | Write 0 or 1 to the output register of a pin. | `0x1` |
@@ -25,7 +26,7 @@ Opcodes `0xB`–`0xF` are unsupported and cause a fault.
 - Each instruction is one 16-bit word. Bits `[15:12]` hold the opcode.
 - A `0` in an encoding table is a required zero bit. A nonzero value in that bit causes a fault.
 - `pin` is a logical pin number, 0–3 (P0–P3).
-- In the Implementation lines, `pc = pc + 1` follows every instruction unless the line changes `pc` or stops execution.
+- In the **Implementation** lines, `pc = pc + 1` follows every instruction unless the line changes `pc` or stops execution.
 - `pin_out[p]` is the output register of pin `p`. `pin_in[p]` is the input value of pin `p`.
 - The address field is `[7:0]`. If the instruction-memory depth is less than 256 words, the unused upper address bits must be 0.
 
@@ -48,13 +49,17 @@ halt execution.
 |---|---|---|---|---|---|
 | 0000 | 0000 | 00000 | 0 | 0 | 0 |
 
-Format
+**Format**
 `HALT`
 
-Description
+
+**Description**
+
+
 Stops execution, asserts `done`, and deasserts `busy`. The output pins keep their programmed values. The program must set the pins to their idle state before `HALT`. The host reads `rx_data` after `done` asserts. The encoding is `0x0000`, so a cleared memory word halts execution.
 
-Implementation
+
+**Implementation**
 `done = 1; busy = 0`
 
 ## set
@@ -65,13 +70,21 @@ set pin.
 |---|---|---|---|---|---|
 | 0001 | 0000 | 00000 | pin[1] | pin[0] | value |
 
-Format
+**Format**
+
+
 `SET pin, value`
 
-Description
+
+**Description**
+
+
 Writes `value` (0 or 1) to the output register of `pin`. Used for clock edges, select signals, and frame bits. Example: `SET P3, 0` = `0x1006`.
 
-Implementation
+
+**Implementation**
+
+
 `pin_out[pin] = value`
 
 ## wait
@@ -82,13 +95,16 @@ wait cycles.
 |---|---|---|---|---|---|
 | 0010 | cycles[11:8] | cycles[7:3] | cycles[2] | cycles[1] | cycles[0] |
 
-Format
+**Format**
 `WAIT cycles`
 
-Description
+
+**Description**
+
+
 Stalls the PC for `cycles` system-clock cycles, 1–4095. Used for clock half-periods, bit periods, and setup and hold times. `WAIT 0` causes a fault. The cycle on which counting starts and completes is TBD. Example: `WAIT 100` = `0x2064`.
 
-Implementation
+**Implementation**
 `stall cycles; pc = pc + 1`
 
 ## load_tx
@@ -99,13 +115,13 @@ load TX shift register.
 |---|---|---|---|---|---|
 | 0011 | 0000 | 00000 | 0 | 0 | 0 |
 
-Format
+**Format**
 `LOAD_TX`
 
-Description
+**Description**
 Copies the host byte `tx_data` into the TX shift register. Used once per transmitted byte. Encoding: `0x3000`.
 
-Implementation
+**Implementation**
 `tx_reg = tx_data`
 
 ## out_bit
@@ -116,13 +132,13 @@ output bit.
 |---|---|---|---|---|---|
 | 0100 | 0000 | 00000 | 0 | pin[1] | pin[0] |
 
-Format
+**Format**
 `OUT_BIT pin`
 
-Description
+**Description**
 Writes bit 7 of the TX shift register to the output register of `pin`. Used for each data bit, MSB first. `OUT_BIT` does not shift the register. Example: `OUT_BIT P1` = `0x4001`.
 
-Implementation
+**Implementation**
 `pin_out[pin] = tx_reg[7]`
 
 ## shift_tx
@@ -133,13 +149,13 @@ shift TX shift register.
 |---|---|---|---|---|---|
 | 0101 | 0000 | 00000 | 0 | 0 | 0 |
 
-Format
+**Format**
 `SHIFT_TX`
 
-Description
+**Description**
 Shifts the TX shift register left by one bit and inserts 0 at bit 0. The next bit moves to bit 7. `SHIFT_TX` does not change any pin; the next `OUT_BIT` writes the new bit. Encoding: `0x5000`.
 
-Implementation
+**Implementation**
 `tx_reg = {tx_reg[6:0], 0}`
 
 ## clear_rx
@@ -150,13 +166,13 @@ clear RX shift register.
 |---|---|---|---|---|---|
 | 0110 | 0000 | 00000 | 0 | 0 | 0 |
 
-Format
+**Format**
 `CLEAR_RX`
 
-Description
+**Description**
 Sets the RX shift register to `0x00`. Used once before each received byte. Encoding: `0x6000`.
 
-Implementation
+**Implementation**
 `rx_reg = 0`
 
 ## sample
@@ -167,13 +183,13 @@ sample pin.
 |---|---|---|---|---|---|
 | 0111 | 0000 | 00000 | 0 | pin[1] | pin[0] |
 
-Format
+**Format**
 `SAMPLE pin`
 
-Description
+**Description**
 Shifts the RX shift register left by one bit and inserts the value of `pin` at bit 0. After 8 samples, the first sampled bit is at bit 7 (MSB first). If `pin_in` goes through a synchronizer, the sampled value is from 2 or more cycles earlier. Example: `SAMPLE P2` = `0x7002`.
 
-Implementation
+**Implementation**
 `rx_reg = {rx_reg[6:0], pin_in[pin]}`
 
 ## count
@@ -184,13 +200,13 @@ load loop counter.
 |---|---|---|---|---|---|
 | 1000 | 0000 | n[7:3] | n[2] | n[1] | n[0] |
 
-Format
+**Format**
 `COUNT n`
 
-Description
+**Description**
 Loads the loop counter with `n`, 1–255. Used before a bit loop; `COUNT 8` gives 8 iterations. `COUNT 0` causes a fault. Example: `COUNT 8` = `0x8008`.
 
-Implementation
+**Implementation**
 `count = n`
 
 ## loop
@@ -201,13 +217,13 @@ loop.
 |---|---|---|---|---|---|
 | 1001 | 0000 | address[7:3] | address[2] | address[1] | address[0] |
 
-Format
+**Format**
 `LOOP address`
 
-Description
+**Description**
 Decrements the loop counter. If the count before the decrement is greater than 1, branches to `address`. If the count before the decrement is 1, the counter becomes 0 and execution continues at the next instruction. If the count is 0, the instruction causes a fault. Example: `LOOP 8` = `0x9008`.
 
-Implementation
+**Implementation**
 `if (count == 0) fault; count = count - 1; if (count != 0) pc = address`
 
 ## jump
@@ -218,13 +234,13 @@ jump.
 |---|---|---|---|---|---|
 | 1010 | 0000 | address[7:3] | address[2] | address[1] | address[0] |
 
-Format
+**Format**
 `JUMP address`
 
-Description
+**Description**
 Branches to `address` unconditionally. Optional; the SPI transfer program does not use it. Example: `JUMP 0` = `0xA000`.
 
-Implementation
+**Implementation**
 `pc = address`
 
 ---
