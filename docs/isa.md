@@ -49,6 +49,8 @@ halt execution.
 | 0000 | 0000 | 00000 | 0 | 0 | 0 |
 
 **Format**
+
+
 `HALT`
 
 
@@ -95,6 +97,8 @@ wait cycles.
 | 0010 | cycles[11:8] | cycles[7:3] | cycles[2] | cycles[1] | cycles[0] |
 
 **Format**
+
+
 `WAIT cycles`
 
 
@@ -115,12 +119,18 @@ load TX shift register.
 | 0011 | 0000 | 00000 | 0 | 0 | 0 |
 
 **Format**
+
+
 `LOAD_TX`
 
 **Description**
+
+
 Copies the host byte `tx_data` into the TX shift register. Used once per transmitted byte. Encoding: `0x3000`.
 
 **Implementation**
+
+
 `tx_reg = tx_data`
 
 ## out_bit
@@ -132,12 +142,18 @@ output bit.
 | 0100 | 0000 | 00000 | 0 | pin[1] | pin[0] |
 
 **Format**
+
+
 `OUT_BIT pin`
 
 **Description**
+
+
 Writes bit 7 of the TX shift register to the output register of `pin`. Used for each data bit, MSB first. `OUT_BIT` does not shift the register. Example: `OUT_BIT P1` = `0x4001`.
 
 **Implementation**
+
+
 `pin_out[pin] = tx_reg[7]`
 
 ## shift_tx
@@ -149,12 +165,18 @@ shift TX shift register.
 | 0101 | 0000 | 00000 | 0 | 0 | 0 |
 
 **Format**
+
+
 `SHIFT_TX`
 
 **Description**
+
+
 Shifts the TX shift register left by one bit and inserts 0 at bit 0. The next bit moves to bit 7. `SHIFT_TX` does not change any pin; the next `OUT_BIT` writes the new bit. Encoding: `0x5000`.
 
 **Implementation**
+
+
 `tx_reg = {tx_reg[6:0], 0}`
 
 ## clear_rx
@@ -166,12 +188,18 @@ clear RX shift register.
 | 0110 | 0000 | 00000 | 0 | 0 | 0 |
 
 **Format**
+
+
 `CLEAR_RX`
 
 **Description**
+
+
 Sets the RX shift register to `0x00`. Used once before each received byte. Encoding: `0x6000`.
 
 **Implementation**
+
+
 `rx_reg = 0`
 
 ## sample
@@ -183,12 +211,18 @@ sample pin.
 | 0111 | 0000 | 00000 | 0 | pin[1] | pin[0] |
 
 **Format**
+
+
 `SAMPLE pin`
 
 **Description**
+
+
 Shifts the RX shift register left by one bit and inserts the value of `pin` at bit 0. After 8 samples, the first sampled bit is at bit 7 (MSB first). If `pin_in` goes through a synchronizer, the sampled value is from 2 or more cycles earlier. Example: `SAMPLE P2` = `0x7002`.
 
 **Implementation**
+
+
 `rx_reg = {rx_reg[6:0], pin_in[pin]}`
 
 ## count
@@ -200,12 +234,18 @@ load loop counter.
 | 1000 | 0000 | n[7:3] | n[2] | n[1] | n[0] |
 
 **Format**
+
+
 `COUNT n`
 
 **Description**
+
+
 Loads the loop counter with `n`, 1–255. Used before a bit loop; `COUNT 8` gives 8 iterations. `COUNT 0` causes a fault. Example: `COUNT 8` = `0x8008`.
 
 **Implementation**
+
+
 `count = n`
 
 ## loop
@@ -217,12 +257,18 @@ loop.
 | 1001 | 0000 | address[7:3] | address[2] | address[1] | address[0] |
 
 **Format**
+
+
 `LOOP address`
 
 **Description**
+
+
 Decrements the loop counter. If the count before the decrement is greater than 1, branches to `address`. If the count before the decrement is 1, the counter becomes 0 and execution continues at the next instruction. If the count is 0, the instruction causes a fault. Example: `LOOP 8` = `0x9008`.
 
 **Implementation**
+
+
 `if (count == 0) fault; count = count - 1; if (count != 0) pc = address`
 
 ## jump
@@ -234,12 +280,18 @@ jump.
 | 1010 | 0000 | address[7:3] | address[2] | address[1] | address[0] |
 
 **Format**
+
+
 `JUMP address`
 
 **Description**
+
+
 Branches to `address` unconditionally. Optional; the SPI transfer program does not use it. Example: `JUMP 0` = `0xA000`.
 
 **Implementation**
+
+
 `pc = address`
 
 ---
