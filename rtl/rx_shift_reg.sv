@@ -5,7 +5,7 @@ module rx_shift_reg #(
     input logic rst_n,
     input logic shift_enable, //
     input logic rx_serial_in, 
-    output logic [7:0] rx_data // output parallel data byte
+    output logic [WIDTH-1:0] rx_data // output parallel data byte
 );
 
     logic [WIDTH-1:0] rx_reg;
@@ -13,7 +13,7 @@ module rx_shift_reg #(
     assign rx_data = rx_reg;
 
     always_ff @(posedge clk) begin
-        if (reset) begin
+        if (rst_n) begin
             rx_reg <= {WIDTH{1'b0}};
         end
         else if (shift_enable) begin
