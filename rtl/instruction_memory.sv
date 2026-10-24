@@ -1,7 +1,7 @@
 module instruction_memory #(
     parameter WIDTH = 16 // TBD
     parameter DEPTH = 32 // TBD instr mem depth
-    parameter ADDRESS_WIDTH = $clog2(WIDTH)
+    parameter ADDRESS_WIDTH = $clog2(DEPTH)
     parameter PATH = "" // FILE PATH for the HEX FILE (FPGA/SIMULATION ONLY)
 )(
     input logic clk,
