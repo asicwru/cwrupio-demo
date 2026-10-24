@@ -26,3 +26,5 @@ module tx_shift_reg #(
     end
 
 endmodule
+
+// SIPO

@@ -5,7 +5,8 @@ module program_counter #(
     input logic clk,
     input logic rst_n,
     input logic branch_enable,
-    input logic [ADDRESS_WIDTH-1:0] target_address, // next address (PC + 4) or Branch
+    input logic [ADDRESS_WIDTH-1:0] entry_address;
+    input logic [ADDRESS_WIDTH-1:0] target_address, // next address (PC + 2) or Branch
     output logic [ADDRESS_WIDTH-1:0] program_counter // current address
 );
 

@@ -1,12 +1,11 @@
 module timing_unit #(
-    parameter N = 12
-)
-(
+    parameter TIMER_WIDTH = 12
+)(
+    input logic clk,
+    input logic rst_n,
     input logic timer_start,
     input logic [N-1:0] timer_cycles,
-    output logic timer_done,
-    input logic clk,
-    input logic rst_n
+    output logic timer_done
 );
 
     logic [N-1:0] count;
