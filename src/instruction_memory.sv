@@ -1,6 +1,6 @@
-module instruction_memory import cwrupio_pkg::*; #(
-    parameter WIDTH = INSTRUCTION_WIDTH, // TBD
-    parameter DEPTH = IMEM_DEPTH, // TBD instr mem depth
+module instruction_memory #(
+    parameter WIDTH = cwrupio_pkg::INSTRUCTION_WIDTH, // TBD
+    parameter DEPTH = cwrupio_pkg::IMEM_DEPTH, // TBD instr mem depth
     parameter ADDRESS_WIDTH = $clog2(DEPTH),
     parameter PATH = "" // FILE PATH for the HEX FILE (FPGA/SIMULATION ONLY)
 )(

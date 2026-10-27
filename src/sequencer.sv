@@ -1,4 +1,4 @@
-module sequencer import cwrupio_pkg::*; #(
+module sequencer #(
     parameter int TIMER_WIDTH = 12, // same as timing_unit
     parameter int LOOP_WIDTH = 8 // same as loop_counter
 )(
@@ -12,12 +12,12 @@ module sequencer import cwrupio_pkg::*; #(
     output logic fault, // level, set by fault, cleared by start
 
     // instruction decoder
-    input opcode_t opcode,
+    input cwrupio_pkg::opcode_t opcode,
     input logic [TIMER_WIDTH-1:0] wait_cycles,
     input logic [LOOP_WIDTH-1:0] count_value,
 
     // program counter
-    output pc_sel_t pc_sel,
+    output cwrupio_pkg::pc_sel_t pc_sel,
 
     // timing unit
     input logic timer_done, // 1-cycle pulse on the last WAIT cycle
@@ -92,7 +92,7 @@ module sequencer import cwrupio_pkg::*; #(
     always_comb begin
         // defaults: every strobe is a 1-cycle pulse, PC holds, state holds
         next_state = state;
-        pc_sel = PC_HOLD;
+        pc_sel = cwrupio_pkg::PC_HOLD;
         set_done = 1'b0;
         set_fault = 1'b0;
         timer_start = 1'b0;
@@ -107,80 +107,80 @@ module sequencer import cwrupio_pkg::*; #(
 
         case (state)
             S_IDLE, S_FAULT: begin
-                pc_sel = PC_START; // pc = 0 when the program starts
+                pc_sel = cwrupio_pkg::PC_START; // pc = 0 when the program starts
                 if (accept_start) begin
                     next_state = S_EXEC;
                 end
             end
             S_EXEC: begin
                 case (opcode)
-                    OP_HALT: begin
+                    cwrupio_pkg::OP_HALT: begin
                         set_done = 1'b1;
                         next_state = S_IDLE;
                     end
-                    OP_SET: begin
+                    cwrupio_pkg::OP_SET: begin
                         pin_set = 1'b1;
-                        pc_sel = PC_INC;
+                        pc_sel = cwrupio_pkg::PC_INC;
                     end
-                    OP_WAIT: begin
+                    cwrupio_pkg::OP_WAIT: begin
                         if (wait_cycles == '0) begin
                             set_fault = 1'b1;
                             next_state = S_FAULT;
                         end 
                         else if (wait_cycles == TIMER_WIDTH'(1)) begin
-                            pc_sel = PC_INC; // WAIT 1 is this cycle only
+                            pc_sel = cwrupio_pkg::PC_INC; // WAIT 1 is this cycle only
                         end 
                         else begin
                             timer_start = 1'b1;
                             next_state = S_STALL;
                         end
                     end
-                    OP_LOAD_TX: begin
+                    cwrupio_pkg::OP_LOAD_TX: begin
                         tx_load = 1'b1;
-                        pc_sel = PC_INC;
+                        pc_sel = cwrupio_pkg::PC_INC;
                     end
-                    OP_OUT_BIT: begin
+                    cwrupio_pkg::OP_OUT_BIT: begin
                         pin_out_bit = 1'b1;
-                        pc_sel = PC_INC;
+                        pc_sel = cwrupio_pkg::PC_INC;
                     end
-                    OP_SHIFT_TX: begin
+                    cwrupio_pkg::OP_SHIFT_TX: begin
                         tx_shift = 1'b1;
-                        pc_sel = PC_INC;
+                        pc_sel = cwrupio_pkg::PC_INC;
                     end
-                    OP_CLEAR_RX: begin
+                    cwrupio_pkg::OP_CLEAR_RX: begin
                         rx_clear = 1'b1;
-                        pc_sel = PC_INC;
+                        pc_sel = cwrupio_pkg::PC_INC;
                     end
-                    OP_SAMPLE: begin
+                    cwrupio_pkg::OP_SAMPLE: begin
                         rx_shift = 1'b1;
-                        pc_sel = PC_INC;
+                        pc_sel = cwrupio_pkg::PC_INC;
                     end
-                    OP_COUNT: begin
+                    cwrupio_pkg::OP_COUNT: begin
                         if (count_value == '0) begin
                             set_fault = 1'b1;
                             next_state = S_FAULT;
                         end 
                         else begin
                             count_ld = 1'b1;
-                            pc_sel = PC_INC;
+                            pc_sel = cwrupio_pkg::PC_INC;
                         end
                     end
-                    OP_LOOP: begin
+                    cwrupio_pkg::OP_LOOP: begin
                         if (count_is_zero) begin
                             set_fault = 1'b1;
                             next_state = S_FAULT;
                         end 
                         else if (count_is_one) begin
                             count_dec = 1'b1;
-                            pc_sel = PC_INC;
+                            pc_sel = cwrupio_pkg::PC_INC;
                         end 
                         else begin
                             count_dec = 1'b1;
-                            pc_sel = PC_BRANCH;
+                            pc_sel = cwrupio_pkg::PC_BRANCH;
                         end
                     end
-                    OP_JUMP: begin
-                        pc_sel = PC_BRANCH;
+                    cwrupio_pkg::OP_JUMP: begin
+                        pc_sel = cwrupio_pkg::PC_BRANCH;
                     end
                     default: begin
                         // opcodes 0xB-0xF are unsupported
@@ -191,7 +191,7 @@ module sequencer import cwrupio_pkg::*; #(
             end
             S_STALL: begin
                 if (timer_done) begin
-                    pc_sel = PC_INC;
+                    pc_sel = cwrupio_pkg::PC_INC;
                     next_state = S_EXEC;
                 end
             end

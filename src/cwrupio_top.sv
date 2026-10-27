@@ -1,5 +1,5 @@
-module cwrupio_top import cwrupio_pkg::*; #(
-    parameter int DEPTH = IMEM_DEPTH, // instruction memory depth
+module cwrupio_top #(
+    parameter int DEPTH = cwrupio_pkg::IMEM_DEPTH, // instruction memory depth
     parameter int PIN_COUNT = 4 // logical pins P0-P3
 )(
     input logic clk,
@@ -19,25 +19,25 @@ module cwrupio_top import cwrupio_pkg::*; #(
 
     localparam int ADDRESS_WIDTH = $clog2(DEPTH);
     localparam int TIMER_WIDTH = 12; // WAIT field width
-    localparam int LOOP_WIDTH = DATA_WIDTH; // COUNT field width
+    localparam int LOOP_WIDTH = cwrupio_pkg::DATA_WIDTH; // COUNT field width
 
     // host interface <-> core
     logic start;
     logic busy;
     logic done;
     logic fault;
-    logic [DATA_WIDTH-1:0] tx_data;
-    logic [DATA_WIDTH-1:0] rx_data;
+    logic [cwrupio_pkg::DATA_WIDTH-1:0] tx_data;
+    logic [cwrupio_pkg::DATA_WIDTH-1:0] rx_data;
     logic imem_write_enable;
     logic [ADDRESS_WIDTH-1:0] imem_write_addr;
-    logic [INSTRUCTION_WIDTH-1:0] imem_write_data;
+    logic [cwrupio_pkg::INSTRUCTION_WIDTH-1:0] imem_write_data;
     logic [PIN_COUNT-1:0] pin_dir;
 
     // fetch and decode
     logic [ADDRESS_WIDTH-1:0] pc;
-    pc_sel_t pc_sel;
-    logic [INSTRUCTION_WIDTH-1:0] instruction;
-    opcode_t opcode;
+    cwrupio_pkg::pc_sel_t pc_sel;
+    logic [cwrupio_pkg::INSTRUCTION_WIDTH-1:0] instruction;
+    cwrupio_pkg::opcode_t opcode;
     logic [1:0] pin_select;
     logic pin_value;
     logic [TIMER_WIDTH-1:0] wait_cycles;
@@ -85,7 +85,7 @@ module cwrupio_top import cwrupio_pkg::*; #(
     );
 
     instruction_memory #(
-        .WIDTH(INSTRUCTION_WIDTH),
+        .WIDTH(cwrupio_pkg::INSTRUCTION_WIDTH),
         .DEPTH(DEPTH)
     ) u_instruction_memory (
         .clk(clk),
@@ -169,7 +169,7 @@ module cwrupio_top import cwrupio_pkg::*; #(
     );
 
     tx_shift_reg #(
-        .WIDTH(DATA_WIDTH)
+        .WIDTH(cwrupio_pkg::DATA_WIDTH)
     ) u_tx_shift_reg (
         .clk(clk),
         .rst_n(rst_n),
@@ -181,7 +181,7 @@ module cwrupio_top import cwrupio_pkg::*; #(
 
     // TODO: rx_shift_reg has no clear input yet, so CLEAR_RX (rx_clear) does nothing
     rx_shift_reg #(
-        .WIDTH(DATA_WIDTH)
+        .WIDTH(cwrupio_pkg::DATA_WIDTH)
     ) u_rx_shift_reg (
         .clk(clk),
         .rst_n(rst_n),

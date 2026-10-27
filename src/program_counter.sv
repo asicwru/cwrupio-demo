@@ -1,9 +1,9 @@
-module program_counter import cwrupio_pkg::*; #(
-    parameter DEPTH = IMEM_DEPTH // instr mem depth
+module program_counter #(
+    parameter DEPTH = cwrupio_pkg::IMEM_DEPTH // instr mem depth
 )(
     input logic clk,
     input logic rst_n,
-    input pc_sel_t pc_sel, // from sequencer
+    input cwrupio_pkg::pc_sel_t pc_sel, // from sequencer
     input logic [$clog2(DEPTH)-1:0] branch_target, // from decoder
     output logic [$clog2(DEPTH)-1:0] pc // current address
 );
@@ -15,16 +15,16 @@ module program_counter import cwrupio_pkg::*; #(
             pc <= '0;
         end else begin
             case (pc_sel)
-                PC_HOLD: begin
+                cwrupio_pkg::PC_HOLD: begin
                     pc <= pc;
                 end
-                PC_INC: begin
+                cwrupio_pkg::PC_INC: begin
                     pc <= pc + ADDRESS_WIDTH'(1);
                 end
-                PC_BRANCH: begin
+                cwrupio_pkg::PC_BRANCH: begin
                     pc <= branch_target;
                 end
-                PC_START: begin
+                cwrupio_pkg::PC_START: begin
                     pc <= '0;
                 end
                 default: begin

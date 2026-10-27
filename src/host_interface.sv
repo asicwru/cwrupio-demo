@@ -1,5 +1,5 @@
-module host_interface import cwrupio_pkg::*; #(
-    parameter int ADDRESS_WIDTH = IMEM_ADDR_WIDTH,
+module host_interface #(
+    parameter int ADDRESS_WIDTH = cwrupio_pkg::IMEM_ADDR_WIDTH,
     parameter int PIN_COUNT = 4 // logical pins P0-P3
 )(
     input logic clk,
@@ -20,13 +20,13 @@ module host_interface import cwrupio_pkg::*; #(
     output logic start, // 1-cycle pulse
 
     // tx/rx shift registers
-    output logic [DATA_WIDTH-1:0] tx_data,
-    input logic [DATA_WIDTH-1:0] rx_data,
+    output logic [cwrupio_pkg::DATA_WIDTH-1:0] tx_data,
+    input logic [cwrupio_pkg::DATA_WIDTH-1:0] rx_data,
 
     // instruction memory write port
     output logic imem_write_enable,
     output logic [ADDRESS_WIDTH-1:0] imem_write_addr,
-    output logic [INSTRUCTION_WIDTH-1:0] imem_write_data,
+    output logic [cwrupio_pkg::INSTRUCTION_WIDTH-1:0] imem_write_data,
 
     // pin control
     output logic [PIN_COUNT-1:0] pin_dir // 1 = output, 0 = input
@@ -72,8 +72,8 @@ module host_interface import cwrupio_pkg::*; #(
     // Byte receiver
     // ---------------------------------------------------------------
     logic [2:0] bit_count;
-    logic [DATA_WIDTH-2:0] shift_in; // first 7 bits of the byte
-    logic [DATA_WIDTH-1:0] rx_byte;
+    logic [cwrupio_pkg::DATA_WIDTH-2:0] shift_in; // first 7 bits of the byte
+    logic [cwrupio_pkg::DATA_WIDTH-1:0] rx_byte;
     logic byte_valid; // 1-cycle pulse when a full byte arrives
     logic first_byte; // next byte is the command byte
 
@@ -86,7 +86,7 @@ module host_interface import cwrupio_pkg::*; #(
         end 
         else if (sck_rise) begin
             bit_count <= bit_count + 1'b1;
-            shift_in <= rx_byte[DATA_WIDTH-2:0];
+            shift_in <= rx_byte[cwrupio_pkg::DATA_WIDTH-2:0];
         end
     end
 
@@ -118,7 +118,7 @@ module host_interface import cwrupio_pkg::*; #(
     // Registers written by the host
     // ---------------------------------------------------------------
     logic imem_high_phase; // 0 = next IMEM byte is the low byte
-    logic [DATA_WIDTH-1:0] imem_low_byte;
+    logic [cwrupio_pkg::DATA_WIDTH-1:0] imem_low_byte;
 
     // the high byte goes straight to memory with the stored low byte (no data register)
     assign imem_write_enable = data_write && (cmd_addr == REG_IMEM) && !busy && imem_high_phase;
@@ -178,9 +178,9 @@ module host_interface import cwrupio_pkg::*; #(
     // ---------------------------------------------------------------
     // Read data and MISO shifter
     // ---------------------------------------------------------------
-    logic [DATA_WIDTH-1:0] status_byte;
-    logic [DATA_WIDTH-1:0] read_byte;
-    logic [DATA_WIDTH-1:0] shift_out;
+    logic [cwrupio_pkg::DATA_WIDTH-1:0] status_byte;
+    logic [cwrupio_pkg::DATA_WIDTH-1:0] read_byte;
+    logic [cwrupio_pkg::DATA_WIDTH-1:0] shift_out;
     logic [3:0] read_addr;
     logic cs_start; // first clk cycle with CS active
 
@@ -202,7 +202,7 @@ module host_interface import cwrupio_pkg::*; #(
                 read_byte = rx_data;
             end
             REG_PIN_DIR: begin
-                read_byte = {{(DATA_WIDTH-PIN_COUNT){1'b0}}, pin_dir};
+                read_byte = {{(cwrupio_pkg::DATA_WIDTH-PIN_COUNT){1'b0}}, pin_dir};
             end
             default: begin
                 read_byte = '0;
@@ -225,11 +225,11 @@ module host_interface import cwrupio_pkg::*; #(
                 shift_out <= read_byte; // next byte starts
             end 
             else begin
-                shift_out <= {shift_out[DATA_WIDTH-2:0], 1'b0};
+                shift_out <= {shift_out[cwrupio_pkg::DATA_WIDTH-2:0], 1'b0};
             end
         end
     end
 
-    assign host_miso = cs_active ? shift_out[DATA_WIDTH-1] : 1'b0;
+    assign host_miso = cs_active ? shift_out[cwrupio_pkg::DATA_WIDTH-1] : 1'b0;
 
 endmodule
