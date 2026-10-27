@@ -1,29 +1,37 @@
-module program_counter #(
-    parameter DEPTH = 32 // TBD instr mem depth
-    parameter ADDRESS_WIDTH = $clog2(DEPTH)
+module program_counter import cwrupio_pkg::*; #(
+    parameter DEPTH = IMEM_DEPTH // instr mem depth
 )(
     input logic clk,
     input logic rst_n,
-    input logic branch_enable,
-    input logic [ADDRESS_WIDTH-1:0] entry_address;
-    input logic [ADDRESS_WIDTH-1:0] target_address, // next address (PC + 2) or Branch
-    output logic [ADDRESS_WIDTH-1:0] program_counter // current address
+    input pc_sel_t pc_sel, // from sequencer
+    input logic [$clog2(DEPTH)-1:0] branch_target, // from decoder
+    output logic [$clog2(DEPTH)-1:0] pc // current address
 );
 
-always_ff @(posedge clk) begin
-    if (!rst_n) begin
-        program_counter <= {ADDRESS_WIDTH{1'b0}};
-    end
-    else begin
-        if (branch_enable) begin
-            program_counter <= target_address;
+    localparam ADDRESS_WIDTH = $clog2(DEPTH);
+
+    always_ff @(posedge clk) begin
+        if (!rst_n) begin
+            pc <= '0;
+        end else begin
+            case (pc_sel)
+                PC_HOLD: begin
+                    pc <= pc;
+                end
+                PC_INC: begin
+                    pc <= pc + ADDRESS_WIDTH'(1);
+                end
+                PC_BRANCH: begin
+                    pc <= branch_target;
+                end
+                PC_START: begin
+                    pc <= '0;
+                end
+                default: begin
+                    pc <= pc;
+                end
+            endcase
         end
-        else begin
-            program_counter <= program_counter + (ADDRESS_WIDTH)'1;
-        end
     end
-end
 
 endmodule
-
-// Plan to implement some branching later
