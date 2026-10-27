@@ -6,7 +6,9 @@ SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v
+PROJECT_SOURCES = cwrupio_pkg.sv instruction_memory.sv program_counter.sv \
+                  instruction_decoder.sv sequencer.sv timing_unit.sv \
+                  loop_counter.sv tx_shift_reg.sv rx_shift_reg.sv project.v
 
 ifneq ($(GATES),yes)
 
@@ -30,8 +32,9 @@ VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
 
 endif
 
+
 # Allow sharing configuration between design and testbench via `include`:
-COMPILE_ARGS 		+= -I$(SRC_DIR)
+COMPILE_ARGS 		+= -I$(SRC_DIR) += -g2012
 
 # Include the testbench sources:
 VERILOG_SOURCES += $(PWD)/tb.v
