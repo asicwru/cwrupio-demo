@@ -6,10 +6,10 @@ module sequencer import cwrupio_pkg::*; #(
     input logic rst_n,
 
     // host interface
-    input logic start, // TODO: confirm handshake (1-cycle pulse?)
+    input logic start, // 1-cycle pulse, ignored while busy
     output logic busy,
-    output logic done,
-    output logic fault,
+    output logic done, // level, set by HALT or fault, cleared by start
+    output logic fault, // level, set by fault, cleared by start
 
     // instruction decoder
     input opcode_t opcode,
@@ -20,7 +20,7 @@ module sequencer import cwrupio_pkg::*; #(
     output pc_sel_t pc_sel,
 
     // timing unit
-    input logic timer_done,
+    input logic timer_done, // 1-cycle pulse on the last WAIT cycle
     output logic timer_start,
 
     // loop counter
@@ -34,7 +34,7 @@ module sequencer import cwrupio_pkg::*; #(
     output logic tx_shift,
 
     // rx shift register
-    output logic rx_clear, // TODO: rx_shift_reg has no clear input yet
+    output logic rx_clear, // rx_shift_reg has no clear input yet
     output logic rx_shift,
 
     // pin control
@@ -46,7 +46,7 @@ module sequencer import cwrupio_pkg::*; #(
         S_IDLE = 2'b00, // wait for start, PC held at 0
         S_EXEC = 2'b01, // execute instruction at pc in 1 cycle
         S_STALL = 2'b10, // WAIT in progress
-        S_FAULT = 2'b11 // TODO: fault response is open
+        S_FAULT = 2'b11 // stopped on a fault, wait for start
     } state_t;
 
     state_t state;
@@ -54,10 +54,12 @@ module sequencer import cwrupio_pkg::*; #(
 
     logic set_done; // from EXEC on HALT
     logic set_fault; // from EXEC on a fault
+    logic accept_start; // start is accepted only in S_IDLE or S_FAULT
 
-    // ---------------------------------------------------------------
-    // State register
-    // ---------------------------------------------------------------
+    assign accept_start = start && ((state == S_IDLE) || (state == S_FAULT));
+    assign busy = (state == S_EXEC) || (state == S_STALL);
+
+    // state register
     always_ff @(posedge clk) begin
         if (!rst_n) begin
             state <= S_IDLE;
@@ -67,26 +69,26 @@ module sequencer import cwrupio_pkg::*; #(
         end
     end
 
-    // ---------------------------------------------------------------
-    // Status registers (done, fault)
-    // ---------------------------------------------------------------
+    // status registers (done, fault)
     always_ff @(posedge clk) begin
         if (!rst_n) begin
             done <= 1'b0;
             fault <= 1'b0;
         end 
-        else begin
-            // TODO: set done on set_done, clear it on start
-            // TODO: set fault on set_fault, decide when it clears (start? reset only?)
+        else if (accept_start) begin
+            done <= 1'b0;
+            fault <= 1'b0;
+        end 
+        else if (set_fault) begin
+            done <= 1'b1;
+            fault <= 1'b1;
+        end 
+        else if (set_done) begin
+            done <= 1'b1;
         end
     end
 
-    // TODO: busy = 1 in S_EXEC and S_STALL
-    assign busy = 1'b0;
-
-    // ---------------------------------------------------------------
-    // Next state and control outputs
-    // ---------------------------------------------------------------
+    // next state and control outputs
     always_comb begin
         // defaults: every strobe is a 1-cycle pulse, PC holds, state holds
         next_state = state;
@@ -104,67 +106,95 @@ module sequencer import cwrupio_pkg::*; #(
         pin_out_bit = 1'b0;
 
         case (state)
-            S_IDLE: begin
-                // TODO: drive PC_START every cycle so pc = 0 when the program starts
-                // TODO: on start, go to S_EXEC
+            S_IDLE, S_FAULT: begin
+                pc_sel = PC_START; // pc = 0 when the program starts
+                if (accept_start) begin
+                    next_state = S_EXEC;
+                end
             end
-
             S_EXEC: begin
                 case (opcode)
                     OP_HALT: begin
-                        // TODO: set_done, PC_HOLD, go to S_IDLE
+                        set_done = 1'b1;
+                        next_state = S_IDLE;
                     end
                     OP_SET: begin
-                        // TODO: pin_set, PC_INC
+                        pin_set = 1'b1;
+                        pc_sel = PC_INC;
                     end
                     OP_WAIT: begin
-                        // TODO: fault if wait_cycles == 0
-                        // TODO: timer_start, PC_HOLD, go to S_STALL
-                        // TODO: if timer option C, handle WAIT 1 (skip S_STALL)
+                        if (wait_cycles == '0) begin
+                            set_fault = 1'b1;
+                            next_state = S_FAULT;
+                        end 
+                        else if (wait_cycles == TIMER_WIDTH'(1)) begin
+                            pc_sel = PC_INC; // WAIT 1 is this cycle only
+                        end 
+                        else begin
+                            timer_start = 1'b1;
+                            next_state = S_STALL;
+                        end
                     end
                     OP_LOAD_TX: begin
-                        // TODO: tx_load, PC_INC
+                        tx_load = 1'b1;
+                        pc_sel = PC_INC;
                     end
                     OP_OUT_BIT: begin
-                        // TODO: pin_out_bit, PC_INC
+                        pin_out_bit = 1'b1;
+                        pc_sel = PC_INC;
                     end
                     OP_SHIFT_TX: begin
-                        // TODO: tx_shift, PC_INC
+                        tx_shift = 1'b1;
+                        pc_sel = PC_INC;
                     end
                     OP_CLEAR_RX: begin
-                        // TODO: rx_clear, PC_INC
+                        rx_clear = 1'b1;
+                        pc_sel = PC_INC;
                     end
                     OP_SAMPLE: begin
-                        // TODO: rx_shift, PC_INC
+                        rx_shift = 1'b1;
+                        pc_sel = PC_INC;
                     end
                     OP_COUNT: begin
-                        // TODO: fault if count_value == 0
-                        // TODO: count_ld, PC_INC
+                        if (count_value == '0) begin
+                            set_fault = 1'b1;
+                            next_state = S_FAULT;
+                        end 
+                        else begin
+                            count_ld = 1'b1;
+                            pc_sel = PC_INC;
+                        end
                     end
                     OP_LOOP: begin
-                        // TODO: count_is_zero -> fault
-                        // TODO: count_is_one  -> count_dec, PC_INC
-                        // TODO: otherwise     -> count_dec, PC_BRANCH
+                        if (count_is_zero) begin
+                            set_fault = 1'b1;
+                            next_state = S_FAULT;
+                        end 
+                        else if (count_is_one) begin
+                            count_dec = 1'b1;
+                            pc_sel = PC_INC;
+                        end 
+                        else begin
+                            count_dec = 1'b1;
+                            pc_sel = PC_BRANCH;
+                        end
                     end
                     OP_JUMP: begin
-                        // TODO: PC_BRANCH
+                        pc_sel = PC_BRANCH;
                     end
                     default: begin
-                        // TODO: opcodes 0xB-0xF: go to S_FAULT, or act as HALT? (open)
+                        // opcodes 0xB-0xF are unsupported
+                        set_fault = 1'b1;
+                        next_state = S_FAULT;
                     end
                 endcase
             end
-
             S_STALL: begin
-                // TODO: PC_HOLD while the timer runs
-                // TODO: on timer_done, PC_INC and go to S_EXEC
-                // TODO: confirm timer option (A: n+2, B: n+1, C: exactly n cycles)
+                if (timer_done) begin
+                    pc_sel = PC_INC;
+                    next_state = S_EXEC;
+                end
             end
-
-            S_FAULT: begin
-                // TODO: decide fault response (stay here until start? until reset?)
-            end
-
             default: begin
                 next_state = S_IDLE;
             end
