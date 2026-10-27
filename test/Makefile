@@ -8,7 +8,8 @@ TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
 PROJECT_SOURCES = cwrupio_pkg.sv instruction_memory.sv program_counter.sv \
                   instruction_decoder.sv sequencer.sv timing_unit.sv \
-                  loop_counter.sv tx_shift_reg.sv rx_shift_reg.sv project.v
+                  loop_counter.sv tx_shift_reg.sv rx_shift_reg.sv \
+                  host_interface.sv pin_control.sv cwrupio_top.sv project.v
 
 ifneq ($(GATES),yes)
 
@@ -34,7 +35,8 @@ endif
 
 
 # Allow sharing configuration between design and testbench via `include`:
-COMPILE_ARGS 		+= -I$(SRC_DIR) += -g2012
+COMPILE_ARGS 		+= -I$(SRC_DIR)
+COMPILE_ARGS 		+= -g2012
 
 # Include the testbench sources:
 VERILOG_SOURCES += $(PWD)/tb.v
