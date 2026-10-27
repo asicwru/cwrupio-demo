@@ -10,14 +10,18 @@ module loop_counter #(
     output logic count_is_zero
 );
     logic [LOOP_WIDTH-1:0] count;
+    
     assign count_is_one = (count == LOOP_WIDTH'(1));
     assign count_is_zero = (count == '0);
+
     always_ff @(posedge clk) begin
         if (!rst_n) begin
             count <= '0;
-        end else if (count_ld) begin
+        end 
+        else if (count_ld) begin
             count <= count_val;
-        end else if (count_dec && count != '0) begin
+        end 
+        else if (count_dec && count != '0) begin
             count <= count - 1'b1;
         end
     end

@@ -15,9 +15,11 @@ module timing_unit #(
     always_ff @(posedge clk) begin
         if (!rst_n) begin
             count <= '0;
-        end else if (timer_start) begin
+        end 
+        else if (timer_start) begin
             count <= timer_cycles;
-        end else if (count != '0) begin
+        end 
+        else if (count != '0) begin
             count <= count - 1'b1;
         end
     end
