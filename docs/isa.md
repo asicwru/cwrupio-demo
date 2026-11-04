@@ -1,5 +1,11 @@
 # CWRUPIO ISA Reference
+## How it works
 
+CWRUPIO is a programmable protocol emulator: a small CPU whose instructions set, sample and time pins, so protocols like SPI, UART and I2C run as programs instead of fixed hardware. The instruction set is described below.
+
+## How to test
+
+Assemble a program with assembler/assembler.ml, load it into instruction memory and start it. The engine asserts done when it reaches HALT. Check the pins with a logic analyzer and read the received byte from rx_data.
 This is currently **unfinished**. Currently, we have 11 instructions supported by our ISA.
 
 ## Instructions
