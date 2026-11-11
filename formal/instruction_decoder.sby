@@ -1,0 +1,21 @@
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+cover: mode cover
+depth 20
+
+[engines]
+smtbmc boolector
+
+[script]
+plugin -i slang
+read_slang cwrupio_pkg.sv instruction_decoder.sv instruction_decoder_props.sv --top instruction_decoder
+prep -top instruction_decoder
+
+[files]
+../src/cwrupio_pkg.sv
+../src/instruction_decoder.sv
+instruction_decoder_props.sv

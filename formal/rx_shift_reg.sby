@@ -1,0 +1,21 @@
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+cover: mode cover
+depth 20
+
+[engines]
+smtbmc boolector
+
+[script]
+plugin -i slang
+read_slang cwrupio_pkg.sv rx_shift_reg.sv rx_shift_reg_props.sv --top rx_shift_reg
+prep -top rx_shift_reg
+
+[files]
+../src/cwrupio_pkg.sv
+../src/rx_shift_reg.sv
+rx_shift_reg_props.sv

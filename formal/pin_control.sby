@@ -1,0 +1,21 @@
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+cover: mode cover
+depth 20
+
+[engines]
+smtbmc boolector
+
+[script]
+plugin -i slang
+read_slang cwrupio_pkg.sv pin_control.sv pin_control_props.sv --top pin_control
+prep -top pin_control
+
+[files]
+../src/cwrupio_pkg.sv
+../src/pin_control.sv
+pin_control_props.sv
