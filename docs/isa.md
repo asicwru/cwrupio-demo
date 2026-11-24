@@ -1,11 +1,5 @@
 # CWRUPIO ISA Reference
-## How it works
 
-CWRUPIO is a programmable protocol emulator: a small CPU whose instructions set, sample and time pins, so protocols like SPI, UART and I2C run as programs instead of fixed hardware. The instruction set is described below.
-
-## How to test
-
-Assemble a program with assembler/assembler.ml, load it into instruction memory and start it. The engine asserts done when it reaches HALT. Check the pins with a logic analyzer and read the received byte from rx_data.
 This is currently **unfinished**. Currently, we have 11 instructions supported by our ISA.
 
 ## Instructions
@@ -30,24 +24,24 @@ Opcodes `0xB`–`0xF` are unsupported and cause a fault.
 
 - Each instruction is one 16-bit word. 
     - Bits `[15:12]` hold the opcode.
-    - Bits `[11:7]` hold the pin the instruction uses (total 8 bidirectional, 8 input-only, 8 output-only, so we need 5 bits to define all).
-    - Bit `[6]` holds the bit value (dependent on op).
+    - Bits `[11:7]` hold the pin being adjusted (total 8 bidrectional, 8 only i, 8 only o, so we need 5 bits to define all).
+    - Bits `[6]` hold the bit value (dependant on op)
     - Bits `[5:0]` hold other opcode specific values.
-    - `WAIT` and `COUNT` have no pin, so their number uses those bits instead: `[11:0]` for `WAIT`, `[7:0]` for `COUNT`.
 
 - A `0` in an encoding table is a required zero bit. A nonzero value in that bit causes a fault.
-- `pin` is a logical pin number, 0–23 (see **Logical pins**). Pin numbers 24–31 cause a fault.
+- `pin` is a logical pin number, 0–3 (P0–P3).
 - In the **Implementation** lines, `pc = pc + 1` follows every instruction unless the line changes `pc` or stops execution.
 - `pin_out[p]` is the output register of pin `p`. `pin_in[p]` is the input value of pin `p`.
-- The address field is `[5:0]`, so a program is at most 64 words. If the instruction-memory depth is less than 64 words, the unused upper address bits must be 0.
+- The address field is `[7:0]`. If the instruction-memory depth is less than 256 words, the unused upper address bits must be 0.
 
 ## Logical pins
 
-| Pin | Name | Direction |
+| Pin | SPI role | Direction |
 |---|---|---|
-| 0–7 | UIO0–UIO7 | Bidirectional (`uio`) |
-| 8–15 | UI0–UI7 | Input only (`ui_in`) |
-| 16–23 | UO0–UO7 | Output only (`uo_out`) |
+| P0 | SCLK | Output |
+| P1 | MOSI | Output |
+| P2 | MISO | Input |
+| P3 | CS (active low) | Output |
 
 ---
 
@@ -78,9 +72,9 @@ Stops execution, asserts `done`, and deasserts `busy`. The output pins keep thei
 
 set pin.
 
-| 15-12 | 11-7 | 6 | 5-0 |
-|---|---|---|---|
-| 0001 | pin[4:0] | value | 000000 |
+| 15-12 | 11-8 | 7-3 | 2 | 1 | 0 |
+|---|---|---|---|---|---|
+| 0001 | 0000 | 00000 | pin[1] | pin[0] | value |
 
 **Format**
 
@@ -91,7 +85,7 @@ set pin.
 **Description**
 
 
-Writes `value` (0 or 1) to the output register of `pin`. Used for clock edges, select signals, and frame bits. Example: `SET UIO3, 0` = `0x1180`.
+Writes `value` (0 or 1) to the output register of `pin`. Used for clock edges, select signals, and frame bits. Example: `SET P3, 0` = `0x1006`.
 
 
 **Implementation**
@@ -148,9 +142,9 @@ Copies the host byte `tx_data` into the TX shift register. Used once per transmi
 
 output bit.
 
-| 15-12 | 11-7 | 6 | 5-0 |
-|---|---|---|---|
-| 0100 | pin[4:0] | 0 | 000000 |
+| 15-12 | 11-8 | 7-3 | 2 | 1 | 0 |
+|---|---|---|---|---|---|
+| 0100 | 0000 | 00000 | 0 | pin[1] | pin[0] |
 
 **Format**
 
@@ -160,7 +154,7 @@ output bit.
 **Description**
 
 
-Writes bit 7 of the TX shift register to the output register of `pin`. Used for each data bit, MSB first. `OUT_BIT` does not shift the register. Example: `OUT_BIT UIO1` = `0x4080`.
+Writes bit 7 of the TX shift register to the output register of `pin`. Used for each data bit, MSB first. `OUT_BIT` does not shift the register. Example: `OUT_BIT P1` = `0x4001`.
 
 **Implementation**
 
@@ -217,9 +211,9 @@ Sets the RX shift register to `0x00`. Used once before each received byte. Encod
 
 sample pin.
 
-| 15-12 | 11-7 | 6 | 5-0 |
-|---|---|---|---|
-| 0111 | pin[4:0] | 0 | 000000 |
+| 15-12 | 11-8 | 7-3 | 2 | 1 | 0 |
+|---|---|---|---|---|---|
+| 0111 | 0000 | 00000 | 0 | pin[1] | pin[0] |
 
 **Format**
 
@@ -229,7 +223,7 @@ sample pin.
 **Description**
 
 
-Shifts the RX shift register left by one bit and inserts the value of `pin` at bit 0. After 8 samples, the first sampled bit is at bit 7 (MSB first). If `pin_in` goes through a synchronizer, the sampled value is from 2 or more cycles earlier. Example: `SAMPLE UIO2` = `0x7100`.
+Shifts the RX shift register left by one bit and inserts the value of `pin` at bit 0. After 8 samples, the first sampled bit is at bit 7 (MSB first). If `pin_in` goes through a synchronizer, the sampled value is from 2 or more cycles earlier. Example: `SAMPLE P2` = `0x7002`.
 
 **Implementation**
 
@@ -263,9 +257,9 @@ Loads the loop counter with `n`, 1–255. Used before a bit loop; `COUNT 8` give
 
 loop.
 
-| 15-12 | 11-7 | 6 | 5-0 |
-|---|---|---|---|
-| 1001 | 00000 | 0 | address[5:0] |
+| 15-12 | 11-8 | 7-3 | 2 | 1 | 0 |
+|---|---|---|---|---|---|
+| 1001 | 0000 | address[7:3] | address[2] | address[1] | address[0] |
 
 **Format**
 
@@ -286,9 +280,9 @@ Decrements the loop counter. If the count before the decrement is greater than 1
 
 jump.
 
-| 15-12 | 11-7 | 6 | 5-0 |
-|---|---|---|---|
-| 1010 | 00000 | 0 | address[5:0] |
+| 15-12 | 11-8 | 7-3 | 2 | 1 | 0 |
+|---|---|---|---|---|---|
+| 1010 | 0000 | address[7:3] | address[2] | address[1] | address[0] |
 
 **Format**
 
@@ -316,7 +310,6 @@ The instruction engine asserts `fault` for these conditions:
 - `WAIT 0` or `COUNT 0`.
 - `LOOP` when the loop counter is 0.
 - A branch address outside the instruction memory.
-- A pin number of 24–31.
-- `SET` or `OUT_BIT` on an input-only pin, or `SAMPLE` on an output-only pin.
 
 Fault behavior: TBD
+

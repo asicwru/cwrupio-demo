@@ -1,0 +1,17 @@
+SET UIO3, 1
+    SET UIO0, 0
+    LOAD_TX
+    CLEAR_RX
+    SET UIO3, 0
+    COUNT 8
+bit:
+    OUT_BIT UIO1
+    WAIT 4
+    SET UIO0, 1
+    SAMPLE UIO2
+    SHIFT_TX
+    WAIT 2
+    SET UIO0, 0
+    LOOP bit
+    SET UIO3, 1
+    HALT
