@@ -1,0 +1,38 @@
+# Whole chip: too big for a full proof, so check every behavior for the first
+# 60 cycles after reset (bmc). The spec task adds docs/isa.md rules the RTL
+# doesn't implement yet and is expected to fail until it does.
+[tasks]
+bmc
+cover
+spec
+
+[options]
+bmc: mode bmc
+cover: mode cover
+spec: mode bmc
+depth 60
+
+[engines]
+~spec: smtbmc boolector
+spec: smtbmc --keep-going boolector
+
+[script]
+plugin -i slang
+~spec: read_slang cwrupio_pkg.sv host_interface.sv instruction_memory.sv program_counter.sv instruction_decoder.sv sequencer.sv timing_unit.sv loop_counter.sv tx_shift_reg.sv rx_shift_reg.sv pin_control.sv cwrupio_top.sv cwrupio_top_props.sv --top cwrupio_top
+spec: read_slang -D SPEC cwrupio_pkg.sv host_interface.sv instruction_memory.sv program_counter.sv instruction_decoder.sv sequencer.sv timing_unit.sv loop_counter.sv tx_shift_reg.sv rx_shift_reg.sv pin_control.sv cwrupio_top.sv cwrupio_top_props.sv --top cwrupio_top
+prep -top cwrupio_top
+
+[files]
+../src/cwrupio_pkg.sv
+../src/host_interface.sv
+../src/instruction_memory.sv
+../src/program_counter.sv
+../src/instruction_decoder.sv
+../src/sequencer.sv
+../src/timing_unit.sv
+../src/loop_counter.sv
+../src/tx_shift_reg.sv
+../src/rx_shift_reg.sv
+../src/pin_control.sv
+../src/cwrupio_top.sv
+cwrupio_top_props.sv

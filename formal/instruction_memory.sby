@@ -1,0 +1,21 @@
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+cover: mode cover
+depth 20
+
+[engines]
+smtbmc boolector
+
+[script]
+plugin -i slang
+read_slang cwrupio_pkg.sv instruction_memory.sv instruction_memory_props.sv --top instruction_memory
+prep -top instruction_memory
+
+[files]
+../src/cwrupio_pkg.sv
+../src/instruction_memory.sv
+instruction_memory_props.sv

@@ -1,0 +1,7 @@
+# SymbiYosys run output
+*_prove/
+*_cover/
+*_bmc/
+*_spec/
+# sby status folders (one per .sby file)
+*/

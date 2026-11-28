@@ -1,0 +1,21 @@
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+cover: mode cover
+depth 20
+
+[engines]
+smtbmc boolector
+
+[script]
+plugin -i slang
+read_slang cwrupio_pkg.sv timing_unit.sv timing_unit_props.sv --top timing_unit
+prep -top timing_unit
+
+[files]
+../src/cwrupio_pkg.sv
+../src/timing_unit.sv
+timing_unit_props.sv
